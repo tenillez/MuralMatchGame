@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import MuralCard from "./components/MuralCard";
 import Wrapper from "./components/Wrapper";
+import Nav from "./components/Nav";
 import Title from "./components/Title";
 import murals from "./murals.json";
 import "./App.css";
@@ -8,56 +9,72 @@ import "./App.css";
 class App extends Component {
   // Setting this.state.cards
   state = {
-    murals,
+    message: "Click a mural to begin!",
     score: 0,
-    highscore: 0
+    highScore: 0,
+    murals: murals,
+    unselectedMurals: murals
   };
 
-  gameOver = () => {
-    if (this.state.score > this.state.highscore) {
-      this.setState({highscore: this.state.score}, function() {
-        console.log(this.state.highscore);
-      });
-    }
-    this.state.murals.forEach(MuralCard => {
-      MuralCard.count = 0;
-    });
-    alert(`SORRY, GAME OVER! \nscore: ${this.state.score}`);
-    this.setState({score: 0});
-    return true;
+  componentDidMount() {
   }
 
-  clickCount = id => {
-    this.state.murals.find((o, i) => {
-      if (o.id === id) {
-        if (murals[i].count === 0) {
-          murals[i].count = murals[i].count + 1;
-          this.setState({ score: this.state.score + 1 }, function (){
-            console.log(this.state.score);
-          });
-          this.state.murals.sort(() => Math.random() - 0.5)
-          return true;
-        } else {
-          this.gameOver();
-        }
+  shuffleArray = array => {
+      for (let i = array.length - 1; i > 0; i--) {
+          let j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
       }
-    });
   }
-  // Map over this.state.cards and render a Card component for each card object
+
+  selectMural = name => {
+      const findMural = this.state.unselectedMurals.find(item => item.name === name);
+
+      if(findMural === undefined) {
+          // failure to select a new mural
+          this.setState({ 
+              message: "You guessed incorrectly!",
+              highScore: (this.state.score > this.state.highScore) ? this.state.score : this.state.highScore,
+              score: 0,
+              murals: murals,
+              unselectedMurals: murals
+          });
+      }
+      else {
+          // success to select a new mural
+          const newMurals = this.state.unselectedMurals.filter(item => item.name !== name);
+          
+          this.setState({ 
+              message: "You guessed correctly!",
+              score: this.state.score + 1,
+              murals: murals,
+              unselectedMurals: newMurals
+          });
+      }
+
+      this.shuffleArray(murals);
+  };
+
   render() {
-    return (
-      <Wrapper>
-        <Title score={this.state.score} highscore={this.state.highscore}>Austin Murals' Clicky Game</Title>
-        {this.state.murals.map(card => (
-          <MuralCard
-            clickCount={this.clickCount}
-            id={card.id}
-            key={card.id}
-            image={card.image}
-          />
-        ))}
-      </Wrapper>
-    );
+      return (
+          <Wrapper>
+              <Nav
+                  message={this.state.message}
+                  score={this.state.score}
+                  highScore={this.state.highScore}
+              />
+              <Title />
+              {
+                  this.state.murals.map(mural => (
+                      <MuralCard
+                          name={mural.name}
+                          image={mural.image}
+                          selectMural={this.selectMural} 
+                          score={this.state.score}
+                      />
+                  ))
+              }
+          </Wrapper>
+      );
   }
 }
 
